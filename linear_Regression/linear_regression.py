@@ -10,7 +10,7 @@ try:
 
     autoData = spContext.textFile('data/auto-miles-per-gallon.csv')
 
-    print(autoData.take(5))
+    #print(autoData.take(5))
 
 
 except ImportError as ie:
