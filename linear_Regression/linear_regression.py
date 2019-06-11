@@ -23,7 +23,8 @@ def cleanData(autoStr):
     else:
         hpValue = autoStr[3]
     
-    return Row(MPG=float(autoLst[0]),CYLINDERS=float(autoLst[1]),DISPLACEMENT=float(autoLst[2]),HORSEPOWER=float(hpValue),WEIGHT=float(autoLst[4]),ACCELERATION=float(autoLst[5]),MODELYEAR=float(autoLst[6]),NAME=autoLst[7])
+    values = Row(MPG=float(autoLst[0]),CYLINDERS=float(autoLst[1]),DISPLACEMENT=float(autoLst[2]),HORSEPOWER=float(hpValue),WEIGHT=float(autoLst[4]),ACCELERATION=float(autoLst[5]),MODELYEAR=float(autoLst[6])) 
+    return values
 
 
 
@@ -39,7 +40,7 @@ try:
 
     autoData = spContext.textFile('data/auto-miles-per-gallon.csv')
 
-    #print(autoData.take(5))
+    print(autoData.take(5))
 
     # Broadcast variable
     avgHP = spContext.broadcast(80)
@@ -50,6 +51,17 @@ try:
     autoCleanRDD = autoRDD.map(cleanData)
 
     print(autoCleanRDD.take(5))
+
+    autoCleanRDD.persist()
+
+
+    #####################################################################################
+    #  Data Analysis
+    #####################################################################################
+
+   
+    autoDF = spSession.createDataFrame(autoCleanRDD)
+    autoDF.select("MPG","CYLINDERS").describe().show(5)
 
 
 
