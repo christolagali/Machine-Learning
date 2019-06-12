@@ -12,19 +12,7 @@ def excludeHeader(autoRDD):
     return autoRows
 
 
-# clean Data Method
-def cleanData(autoStr):
 
-    global avgHP
-    autoLst = autoStr.split(',')
-
-    if autoStr[3] == '?':
-        hpValue = avgHP
-    else:
-        hpValue = autoStr[3]
-    
-    values = Row(MPG=float(autoLst[0]),CYLINDERS=float(autoLst[1]),DISPLACEMENT=float(autoLst[2]),HORSEPOWER=float(hpValue),WEIGHT=float(autoLst[4]),ACCELERATION=float(autoLst[5]),MODELYEAR=float(autoLst[6])) 
-    return values
 
 
 
@@ -34,34 +22,64 @@ def cleanData(autoStr):
 ##########################################################################################################################
 try:
 
-    spContext = sparkconnect.getContext()
+     
+    # get spark context
 
-    spSession = sparkconnect.getSession()
+    sc = sparkconnect.getContext()
+    sp = sparkconnect.getSession()
 
-    autoData = spContext.textFile('data/auto-miles-per-gallon.csv')
+    
+    # loading and prepping the data
 
-    print(autoData.take(5))
+    autoRDD = sc.textFile('data/auto-miles-per-gallon.csv')
 
-    # Broadcast variable
-    avgHP = spContext.broadcast(80)
+    header = autoRDD.first()
 
-    # cleaned RDD
-    autoRDD = excludeHeader(autoData)
+    autoDataRDD = autoRDD.filter(lambda x : x != header)
+    #print(autoRDD.take(5))
 
-    autoCleanRDD = autoRDD.map(cleanData)
+    #print(autoDataRDD.take(5))
 
-    print(autoCleanRDD.take(5))
+    #.........................................................................................................
+    #   ['MPG,CYLINDERS,DISPLACEMENT,HORSEPOWER,WEIGHT,ACCELERATION,MODELYEAR,NAME', 
+    #   '18,8,307,130,3504,12,70,chevrolet chevelle malibu'
+    #   
+    #   we wil try to predict MPG (target) based using features (rest of the attributes)
+    #.........................................................................................................
 
-    autoCleanRDD.persist()
 
+    # Data Cleanup
 
-    #####################################################################################
-    #  Data Analysis
-    #####################################################################################
+    # handle missing data (like HP column)
+    # converting nos from string to float
 
-   
-    autoDF = spSession.createDataFrame(autoCleanRDD)
-    autoDF.select("MPG","CYLINDERS").describe().show(5)
+    # creating a broadcast variable for the average HP
+    avgHP = sc.broadcast(80.0)
+
+    def cleanupData(autoStr):
+
+        global avgHP
+        # find ? and replace with average value
+
+        autoLst = autoStr.split(",")
+
+        if autoLst[3] == "?":
+            autoLst[3] = avgHP.value
+        
+        # create a row with converted float values
+        values = Row(MPG=float(autoLst[0]), CYLINDERS=float(autoLst[1]), DISPLACEMENT=float(autoLst[2]), HORSEPOWER=float(autoLst[3]), WEIGHT=float(autoLst[4]), ACCELERATION=float(autoLst[5]), MODELYEAR=float(autoLst[6]), NAME=autoLst[7])
+
+        return values
+
+    autoMap = autoDataRDD.map(cleanupData)
+
+    #print(autoMap.take(10))
+
+    # create a Data Frame
+
+    autoDF = sp.createDataFrame(autoMap)
+
+    autoDF.show()
 
 
 
