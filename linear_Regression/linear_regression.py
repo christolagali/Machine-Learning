@@ -16,6 +16,32 @@ def excludeHeader(autoRDD):
 
     return autoRows
 
+def cleanupData(autoStr):
+    
+    global avgHP
+    
+    # find ? and replace with average value
+     
+    autoLst = autoStr.split(",")
+    
+    if autoLst[3] == "?":
+        autoLst[3] = avgHP.value
+        
+    # create a row with converted float values
+    values = Row(MPG=float(autoLst[0]), CYLINDERS=float(autoLst[1]), DISPLACEMENT=float(autoLst[2]), HORSEPOWER=float(autoLst[3]), WEIGHT=float(autoLst[4]), ACCELERATION=float(autoLst[5]), MODELYEAR=float(autoLst[6]), NAME=autoLst[7])
+
+    return values
+
+def transformToLabeledPoint(row):
+
+    lp = (row['MPG'],Vectors.dense([row['ACCELERATION'],row['DISPLACEMENT'],row['WEIGHT']]))
+    
+    return lp
+
+
+
+    
+
 
 
 
@@ -41,9 +67,7 @@ try:
     header = autoRDD.first()
 
     autoDataRDD = autoRDD.filter(lambda x : x != header)
-    #print(autoRDD.take(5))
 
-    #print(autoDataRDD.take(5))
 
     #.........................................................................................................
     #   ['MPG,CYLINDERS,DISPLACEMENT,HORSEPOWER,WEIGHT,ACCELERATION,MODELYEAR,NAME', 
@@ -61,32 +85,14 @@ try:
     # creating a broadcast variable for the average HP
     avgHP = sc.broadcast(80.0)
 
-    def cleanupData(autoStr):
-
-        global avgHP
-        # find ? and replace with average value
-
-        autoLst = autoStr.split(",")
-
-        if autoLst[3] == "?":
-            autoLst[3] = avgHP.value
-        
-        # create a row with converted float values
-        values = Row(MPG=float(autoLst[0]), CYLINDERS=float(autoLst[1]), DISPLACEMENT=float(autoLst[2]), HORSEPOWER=float(autoLst[3]), WEIGHT=float(autoLst[4]), ACCELERATION=float(autoLst[5]), MODELYEAR=float(autoLst[6]), NAME=autoLst[7])
-
-        return values
-
     autoMap = autoDataRDD.map(cleanupData)
 
     autoMap.persist()
-
-    #print(autoMap.take(10))
 
     # create a Data Frame
 
     autoDF = sp.createDataFrame(autoMap)
 
-    #autoDF.show()
 
 
     ###############################################################################################################
@@ -101,25 +107,53 @@ try:
             print('Correlation of MPG with ',i,autoDF.stat.corr('MPG',i))"""
     
 
+    # Converting Data Frame to Pandas Data Frame
     autoPandasDF = autoDF.toPandas()
 
-    #autoPandasDF.plot(kind='scatter',x='DISPLACEMENT',y='MPG')
+    
+    # Plotting MPG (target variable) against other independent Variables for better Corelation
 
+    # MPG & ACCELERATION
+    autoPandasDF.plot(kind='scatter',x='ACCELERATION',y='MPG')
+    plt.scatter(autoPandasDF.ACCELERATION,autoPandasDF.MPG)
+    plt.xlabel('ACCELERATION')
+    plt.ylabel('MPG')
+    plt.savefig('charts/MPG_ACCELERATION.png')
 
-    #plt.scatter(autoPandasDF.DISPLACEMENT,autoPandasDF.MPG)
+    # MPG & DISPLACEMENT
+    autoPandasDF.plot(kind='scatter',x='DISPLACEMENT',y='MPG')
+    plt.scatter(autoPandasDF.DISPLACEMENT,autoPandasDF.MPG)
+    plt.xlabel('DISPLACEMENT')
+    plt.ylabel('MPG')
+    plt.savefig('charts/MPG_DISPLACEMENT.png')
 
-    #plt.show()
+    # MPG & WEIGHT
+    autoPandasDF.plot(kind='scatter',x='WEIGHT',y='MPG')
+    plt.scatter(autoPandasDF.WEIGHT,autoPandasDF.MPG)
+    plt.xlabel('WEIGHT')
+    plt.ylabel('MPG')
+    plt.savefig('charts/MPG_WEIGHT.png')
+
+    # MPG & CYLINDERS
+    autoPandasDF.plot(kind='scatter',x='CYLINDERS',y='MPG')
+    plt.scatter(autoPandasDF.CYLINDERS,autoPandasDF.MPG)
+    plt.xlabel('CYLINDERS')
+    plt.ylabel('MPG')
+    plt.savefig('charts/MPG_CYLINDERS.png')
+
+    # MPG & HORSEPOWER
+    autoPandasDF.plot(kind='scatter',x='HORSEPOWER',y='MPG')
+    plt.scatter(autoPandasDF.HORSEPOWER,autoPandasDF.MPG)
+    plt.xlabel('HORSEPOWER')
+    plt.ylabel('MPG')
+    plt.savefig('charts/MPG_HORSEPOWER.png')
 
 
     #####################################################################################################################
     # Prepare Data for ML
     ##################################################################################################################
 
-    def transformToLabeledPoint(row):
-
-        lp = (row['MPG'],Vectors.dense([row['ACCELERATION'],row['DISPLACEMENT'],row['WEIGHT']]))
     
-        return lp
 
 
     autoLabeledPoint = autoMap.map(transformToLabeledPoint)
