@@ -1,6 +1,8 @@
 import sys
 import sparkconnect
 from pyspark.sql import Row
+import matplotlib.pyplot as plt
+from pyspark.ml.linalg import Vectors
 
 # Remove header from the imported flat files
 def excludeHeader(autoRDD):
@@ -73,13 +75,55 @@ try:
 
     autoMap = autoDataRDD.map(cleanupData)
 
+    autoMap.persist()
+
     #print(autoMap.take(10))
 
     # create a Data Frame
 
     autoDF = sp.createDataFrame(autoMap)
 
-    autoDF.show()
+    #autoDF.show()
+
+
+    ###############################################################################################################
+    # Perform Data Analysis
+    #
+    ###############################################################################################################
+
+    # find correlation coefficient
+
+    """for i in autoDF.columns:
+        if not isinstance(autoDF.select(i).take(1)[0][0],str):
+            print('Correlation of MPG with ',i,autoDF.stat.corr('MPG',i))"""
+    
+
+    autoPandasDF = autoDF.toPandas()
+
+    #autoPandasDF.plot(kind='scatter',x='DISPLACEMENT',y='MPG')
+
+
+    #plt.scatter(autoPandasDF.DISPLACEMENT,autoPandasDF.MPG)
+
+    #plt.show()
+
+
+    #####################################################################################################################
+    # Prepare Data for ML
+    ##################################################################################################################
+
+    def transformToLabeledPoint(row):
+
+        lp = (row['MPG'],Vectors.dense([row['ACCELERATION'],row['DISPLACEMENT'],row['WEIGHT']]))
+    
+        return lp
+
+
+    autoLabeledPoint = autoMap.map(transformToLabeledPoint)
+
+    print(autoLabeledPoint.take(5))
+
+
 
 
 
