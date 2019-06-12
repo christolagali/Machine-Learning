@@ -3,6 +3,9 @@ import sparkconnect
 from pyspark.sql import Row
 import matplotlib.pyplot as plt
 from pyspark.ml.linalg import Vectors
+from pyspark.ml.regression import LinearRegression
+
+from pyspark.ml.evaluation import RegressionEvaluator
 
 # Remove header from the imported flat files
 def excludeHeader(autoRDD):
@@ -121,10 +124,73 @@ try:
 
     autoLabeledPoint = autoMap.map(transformToLabeledPoint)
 
-    print(autoLabeledPoint.take(5))
+    autoLabeledPoint.persist()
+
+    #print(autoLabeledPoint.take(5))
+
+
+    # IMP -	All Machine Learning Algorithms in Spark expect our data to be in a Data Frame that contains the label and features columns.
+
+    autoMLDF = sp.createDataFrame(autoLabeledPoint,['label','features'])
+
+    #autoMLDF.show(5)
+
+
+    #......................................................................................................
+    # actual Machine learniing
+    #......................................................................................................
+
+    # split the dataset into Training and Testing Data set
+
+    # splits data randomly. % of split. 90% goes to training and 10% goes to testing
+    (trainData,testData) = autoMLDF.randomSplit([0.6,0.4])
+
+    # train count
+    #print(trainData.count())
+
+    # test count 
+    #print(testData.count())
+
+
+    #######################################
+    ##  Train Model
+    ######################################
+
+    # maxIter = no of times it is going to Iterate to build the model
+    # more iterations would mean a better but more time too
+    lin_reg = LinearRegression(maxIter=30)
+
+    # fit() to build the model
+
+    line_reg_model = lin_reg.fit(trainData)
+
+    # Model will basically contain Coefficient (alpha) and Intercept(Beta)
+    print("Coefficient : " ,str(line_reg_model.coefficients))
+    print("Intercept is :" ,str(line_reg_model.intercept))
+
+
+    predictions  = line_reg_model.transform(testData)
+
+    predictions.persist()
+    #print(predictions.collect())
+
+    # this means our equation will look as follows:
+    # MPG(target variable) =  (0.18070324555844722 * ACCELERATION)  (-0.015865508002443303 * DISPLACEMENT) (-0.005853837529094065 * WEIGHT) + 41.1518935140389 (INTERCEPT)
+
+    # Once we build the model we can test the model
+
+    predictions.select("prediction","label","features").show()
 
 
 
+    #####################################################
+    # Evaluate Results of the predictions
+    #####################################################
+    
+    # Metric Name R2 0.6976322649426134
+    evaluator = RegressionEvaluator(predictionCol='prediction',labelCol='label',metricName="r2")
+
+    print(evaluator.evaluate(predictions))
 
 
 
