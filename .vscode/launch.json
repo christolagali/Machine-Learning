@@ -8,7 +8,8 @@
             "name": "Python: Current File (Integrated Terminal)",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/linear_regression/linear_regression.py",
+            //"program": "${workspaceFolder}/linear_regression/linear_regression.py",
+            "program": "${workspaceFolder}/logistic_Regression/Bank_Data_Prediction.py",
             "console": "integratedTerminal"
         },
         {
