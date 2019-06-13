@@ -40,14 +40,6 @@ def transformToLabeledPoint(row):
 
 
 
-    
-
-
-
-
-
-
-
 ##########################################################################################################################
 # Main Program
 ##########################################################################################################################
@@ -62,7 +54,7 @@ try:
     
     # loading and prepping the data
 
-    autoRDD = sc.textFile('data/auto-miles-per-gallon.csv')
+    autoRDD = sc.textFile('../data/auto-miles-per-gallon.csv')
 
     header = autoRDD.first()
 

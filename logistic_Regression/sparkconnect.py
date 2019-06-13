@@ -20,7 +20,7 @@ import sys
 if sys.platform.startswith('win'):
     #Where you downloaded the resource bundle
     #os.chdir("C:/SparkML/sparkML_Pracs/linear_Regression")
-    os.chdir("C:/Users/103615/Desktop/training/Spark_ML_Revise/linear_Regression")
+    os.chdir("C:/Users/103615/Desktop/training/Spark_ML_Revise/logistic_Regression")
     #Where you installed spark.    
     os.environ['SPARK_HOME'] = 'C:/spark-2.3.1-bin-hadoop2.6'
 #other platforms - linux/mac
