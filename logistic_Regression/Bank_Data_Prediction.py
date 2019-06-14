@@ -4,6 +4,7 @@ from pyspark.sql import Row
 import matplotlib.pyplot as plt
 from pyspark.ml.linalg import Vectors
 from pyspark.ml.classification import LogisticRegression
+from pyspark.ml.evaluation import BinaryClassificationEvaluator
 
 # Exclude header from RDD
 def excludeHeader(bankRDD):
@@ -110,7 +111,7 @@ try:
     #####   Scatter plots for each variable against OUTCOME
     #########################################################
 
-    """
+    
     fig,ax = plt.subplots()
     ax.scatter(x=bankPandasDF.AGE,y=bankPandasDF.OUTCOME,c=bankPandasDF.OUTCOME)
     ax.xlabel('AGE')
@@ -157,7 +158,7 @@ try:
     plt.savefig('charts/OUTCOME_MARRIED.png')
 
     del plt
-    """
+    
 
 
 
@@ -212,20 +213,38 @@ try:
 
     predictions.persist()
 
+
+    #.................................................................................
+    #   Coefficients  DenseMatrix([
+    # [-3.38742717e-02,  3.04807506e-05, -8.07349111e-01, 2.15245871e-01,  2.22353603e-01,  5.83806692e-01]])
+    #   Intercepts [-0.46070628895829485]
+    #   Area Under ROC  0.6674415204678364
+    #   
+    #.................................................................................
     print('Coefficients ',log_reg_model.coefficientMatrix)
     print('Intercepts' , log_reg_model.interceptVector)
 
-    #https://towardsdatascience.com/machine-learning-with-pyspark-and-mllib-solving-a-binary-classification-problem-96396065d2aa
+    
+    # Area Under ROC
+    trainingSummary = log_reg_model.summary
+
+    roc = trainingSummary.roc.toPandas()
+    plt.plot(roc['FPR'],roc['TPR'])
+    plt.ylabel('False Positive Rate')
+    plt.xlabel('True Positive Rate')
+    plt.title('ROC Curve')
+    plt.show()
 
 
-
-
+    print('Area Under ROC ', trainingSummary.areaUnderROC )
     
 
 
+    bin_evaluator = BinaryClassificationEvaluator()
 
+    # Test Area Under ROC  0.6444015444015446
 
-
+    print('Test Area Under ROC ',bin_evaluator.evaluate(predictions))
 
 
 
